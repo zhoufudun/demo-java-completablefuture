@@ -1,13 +1,9 @@
 package demo.completable_future.part0;
 
 import demo.completable_future.common.Demo;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class MethodsOfLifecycle extends Demo {
 
@@ -32,4 +28,32 @@ public class MethodsOfLifecycle extends Demo {
 
         executorService.shutdown();
     }
+
+    @Test
+    public void testAsyncSupply() throws InterruptedException, ExecutionException {
+
+        ThreadPoolExecutor executorService =
+                new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1));
+        for(int i=0;i<2;i++){
+            int finalI = i;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    submitTask(executorService, finalI);
+                }
+            }).start();
+        }
+    }
+
+    private static CompletableFuture<String> submitTask(ThreadPoolExecutor executorService,int num) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Thread.sleep(100000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return "success"+num;
+        }, executorService);
+    }
+
 }
